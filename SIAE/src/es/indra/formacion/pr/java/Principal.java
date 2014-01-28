@@ -1,7 +1,5 @@
 package es.indra.formacion.pr.java;
 
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
@@ -37,9 +35,9 @@ public class Principal {
 			if (opcion.equals("1")) {
 				agregarArticulo();
 			} else if (opcion.equals("2")) {
-				
+				modificarArticulo();
 			} else if (opcion.equals("3")) {
-				
+				eliminarArticulo();
 			} else if (opcion.equals("4")) {
 				listarArticulos();
 			} else if (opcion.equals("5")) {
@@ -48,19 +46,60 @@ public class Principal {
 		}
 	}
 	
+	private void eliminarArticulo() {
+		System.out.print("Id: ");
+		String sid = scanner.nextLine();
+		Integer id = Integer.parseInt(sid); // TODO Agregar validación
+		
+		articuloLogic.eliminar(id);
+	}
+
+	private void modificarArticulo() {
+		System.out.print("Id: ");
+		String sid = scanner.nextLine();
+		Integer id = Integer.parseInt(sid); // TODO Agregar validación
+		
+		Articulo articulo = articuloLogic.obtener(id);
+		
+		if (articulo == null) // Si no existe el artícuylo en ArticuloLogic que aborte
+			return;
+
+		// Pidiendo datos comunes de artículo
+		System.out.print("Nombre: ");
+		String nombre = scanner.nextLine();
+		System.out.print("Precio: ");
+		String sprecio = scanner.nextLine();
+		Float precio = Float.parseFloat(sprecio); // TODO Agregar validación!
+		
+		if (articulo instanceof Camara) {
+			System.out.print("Zoom: ");
+			String szoom = scanner.nextLine();
+			System.out.print("Tipo de Tarjeta [SD|MICRO_SD|MINI_SD|CF]: ");
+			String stipoTarjeta = scanner.nextLine();
+			
+			// TODO Agregar manejo de excepciones
+			Integer zoom = Integer.parseInt(szoom); 
+			Camara.TipoTarjeta tipoTarjeta = Camara.TipoTarjeta.valueOf(stipoTarjeta.toUpperCase());
+			
+			articulo = new Camara(id, nombre, precio, tipoTarjeta, zoom);
+		} else if (articulo instanceof Dvd) {
+			System.out.print("Tiene grabadora [S|N]: ");
+			String sgrabadora = scanner.nextLine();
+			System.out.print("Tiene USB [S|N]: ");
+			String sTieneUsb = scanner.nextLine();
+			
+			// TODO Agregar manejo de excepciones
+			Boolean grabadora = (sgrabadora.toUpperCase().equals("S"))?true:false;
+			Boolean tieneUsb = sTieneUsb.toUpperCase().equals("S");
+			
+			articulo = new Dvd(id, nombre, precio, grabadora, tieneUsb);						
+		}
+		
+		articuloLogic.modificar(articulo);
+	}
+
 	private void listarArticulos() {
 		List<Articulo> articulos = articuloLogic.obtenerTodos();
-		
-		Collections.sort(articulos, new Comparator<Articulo>() {
-			@Override
-			public int compare(Articulo a1, Articulo a2) {
-				if (a1 != null && a1.getPrecio() != null &&
-						a2 != null && a2.getPrecio() != null) 
-					return (int)(a1.getPrecio() - a2.getPrecio());
-				else
-					return 0;
-			}
-		});
 		
 		for (Articulo art : articulos) {
 			System.out.println(art);
@@ -72,6 +111,12 @@ public class Principal {
 		
 		System.out.print("Tipo [CAMARA|DVD]: ");
 		String tipo = scanner.nextLine();
+
+		// Verificación Ruth!
+		if (!tipo.toLowerCase().equals("camara") && 
+						!tipo.toLowerCase().equals("dvd"))
+			return;
+		
 		System.out.print("Nombre: ");
 		String nombre = scanner.nextLine();
 		System.out.print("Precio: ");
