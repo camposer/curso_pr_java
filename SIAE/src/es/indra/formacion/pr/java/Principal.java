@@ -3,6 +3,10 @@ package es.indra.formacion.pr.java;
 import java.util.List;
 import java.util.Scanner;
 
+import es.indra.formacion.pr.java.exception.DecimalInvalidoException;
+import es.indra.formacion.pr.java.exception.EnteroInvalidoException;
+import es.indra.formacion.pr.java.exception.PrecioInvalidoException;
+import es.indra.formacion.pr.java.exception.TipoTarjetaInvalidoException;
 import es.indra.formacion.pr.java.logic.ArticuloLogic;
 import es.indra.formacion.pr.java.model.Articulo;
 import es.indra.formacion.pr.java.model.Camara;
@@ -33,11 +37,35 @@ public class Principal {
 			
 			String opcion = scanner.nextLine();
 			if (opcion.equals("1")) {
-				agregarArticulo();
+				try {
+					agregarArticulo();
+				} catch (DecimalInvalidoException e) {
+					System.err.println(e.getMessage() + ":" + e.getValue());
+				} catch (PrecioInvalidoException e) {
+					System.err.println(e.getMessage() + ":" + e.getValue());
+				} catch (EnteroInvalidoException e) {
+					System.err.println(e.getMessage() + ":" + e.getValue());
+				} catch (TipoTarjetaInvalidoException e) {
+					System.err.println(e.getMessage() + ":" + e.getValue());
+				}
 			} else if (opcion.equals("2")) {
-				modificarArticulo();
+				try {
+					modificarArticulo();
+				} catch (EnteroInvalidoException e) {
+					System.err.println(e.getMessage() + ":" + e.getValue());
+				} catch (DecimalInvalidoException e) {
+					System.err.println(e.getMessage() + ":" + e.getValue());
+				} catch (PrecioInvalidoException e) {
+					System.err.println(e.getMessage() + ":" + e.getValue());
+				} catch (TipoTarjetaInvalidoException e) {
+					System.err.println(e.getMessage() + ":" + e.getValue());
+				}
 			} else if (opcion.equals("3")) {
-				eliminarArticulo();
+				try {
+					eliminarArticulo();
+				} catch (EnteroInvalidoException e) {
+					System.err.println(e.getMessage() + ": " + e.getValue());
+				}
 			} else if (opcion.equals("4")) {
 				listarArticulos();
 			} else if (opcion.equals("5")) {
@@ -46,18 +74,27 @@ public class Principal {
 		}
 	}
 	
-	private void eliminarArticulo() {
+	private void eliminarArticulo() throws EnteroInvalidoException {
 		System.out.print("Id: ");
 		String sid = scanner.nextLine();
-		Integer id = Integer.parseInt(sid); // TODO Agregar validación
 		
-		articuloLogic.eliminar(id);
+		try {
+			Integer id = Integer.parseInt(sid);
+			articuloLogic.eliminar(id);
+		} catch (Exception e) {
+			throw new EnteroInvalidoException("Id inválido", sid);
+		}		
 	}
 
-	private void modificarArticulo() {
+	private void modificarArticulo() throws EnteroInvalidoException, DecimalInvalidoException, PrecioInvalidoException, TipoTarjetaInvalidoException {
 		System.out.print("Id: ");
 		String sid = scanner.nextLine();
-		Integer id = Integer.parseInt(sid); // TODO Agregar validación
+		Integer id = null;
+		try {
+			id = Integer.parseInt(sid); 
+		} catch (Exception e) {
+			throw new EnteroInvalidoException("Id inválido", sid);
+		}
 		
 		Articulo articulo = articuloLogic.obtener(id);
 		
@@ -69,7 +106,15 @@ public class Principal {
 		String nombre = scanner.nextLine();
 		System.out.print("Precio: ");
 		String sprecio = scanner.nextLine();
-		Float precio = Float.parseFloat(sprecio); // TODO Agregar validación!
+		Float precio = null;
+		try {
+			precio = Float.parseFloat(sprecio);
+			
+			if (precio < 0)
+				throw new PrecioInvalidoException("Precio inválido", precio);
+		} catch (NumberFormatException e) {
+			throw new DecimalInvalidoException("Precio inválido", sprecio);
+		}
 		
 		if (articulo instanceof Camara) {
 			System.out.print("Zoom: ");
@@ -77,9 +122,20 @@ public class Principal {
 			System.out.print("Tipo de Tarjeta [SD|MICRO_SD|MINI_SD|CF]: ");
 			String stipoTarjeta = scanner.nextLine();
 			
-			// TODO Agregar manejo de excepciones
-			Integer zoom = Integer.parseInt(szoom); 
-			Camara.TipoTarjeta tipoTarjeta = Camara.TipoTarjeta.valueOf(stipoTarjeta.toUpperCase());
+			// Validaciones
+			Integer zoom = null;
+			try {
+				zoom = Integer.parseInt(szoom);
+			} catch(Exception e) {
+				throw new EnteroInvalidoException("Zoom inválido", szoom);
+			}
+			
+			Camara.TipoTarjeta tipoTarjeta = null;
+			try {
+				tipoTarjeta = Camara.TipoTarjeta.valueOf(stipoTarjeta.toUpperCase());
+			} catch(Exception e) {
+				throw new TipoTarjetaInvalidoException("Tipo de tarjeta inválido", stipoTarjeta);
+			}
 			
 			articulo = new Camara(id, nombre, precio, tipoTarjeta, zoom);
 		} else if (articulo instanceof Dvd) {
@@ -88,7 +144,6 @@ public class Principal {
 			System.out.print("Tiene USB [S|N]: ");
 			String sTieneUsb = scanner.nextLine();
 			
-			// TODO Agregar manejo de excepciones
 			Boolean grabadora = (sgrabadora.toUpperCase().equals("S"))?true:false;
 			Boolean tieneUsb = sTieneUsb.toUpperCase().equals("S");
 			
@@ -106,7 +161,7 @@ public class Principal {
 		}
 	}
 	
-	private void agregarArticulo() {
+	private void agregarArticulo() throws DecimalInvalidoException, PrecioInvalidoException, EnteroInvalidoException, TipoTarjetaInvalidoException {
 		Articulo articulo = null;
 		
 		System.out.print("Tipo [CAMARA|DVD]: ");
@@ -121,7 +176,15 @@ public class Principal {
 		String nombre = scanner.nextLine();
 		System.out.print("Precio: ");
 		String sprecio = scanner.nextLine();
-		Float precio = Float.parseFloat(sprecio); // TODO Agregar validación!
+		Float precio = null;
+		try {
+			precio = Float.parseFloat(sprecio);
+			
+			if (precio < 0)
+				throw new PrecioInvalidoException("Precio inválido", precio);
+		} catch (NumberFormatException e) {
+			throw new DecimalInvalidoException("Precio inválido", sprecio);
+		}
 		
 		if (tipo.toLowerCase().equals("camara")) {
 			System.out.print("Zoom: ");
@@ -129,9 +192,20 @@ public class Principal {
 			System.out.print("Tipo de Tarjeta [SD|MICRO_SD|MINI_SD|CF]: ");
 			String stipoTarjeta = scanner.nextLine();
 			
-			// TODO Agregar manejo de excepciones
-			Integer zoom = Integer.parseInt(szoom); 
-			Camara.TipoTarjeta tipoTarjeta = Camara.TipoTarjeta.valueOf(stipoTarjeta.toUpperCase());
+			// Validaciones
+			Integer zoom = null;
+			try {
+				zoom = Integer.parseInt(szoom);
+			} catch(Exception e) {
+				throw new EnteroInvalidoException("Zoom inválido", szoom);
+			}
+			
+			Camara.TipoTarjeta tipoTarjeta = null;
+			try {
+				tipoTarjeta = Camara.TipoTarjeta.valueOf(stipoTarjeta.toUpperCase());
+			} catch(Exception e) {
+				throw new TipoTarjetaInvalidoException("Tipo de tarjeta inválido", stipoTarjeta);
+			}
 			
 			articulo = new Camara(nombre, precio, tipoTarjeta, zoom);
 		} else if (tipo.toLowerCase().equals("dvd")) {
@@ -140,7 +214,6 @@ public class Principal {
 			System.out.print("Tiene USB [S|N]: ");
 			String sTieneUsb = scanner.nextLine();
 			
-			// TODO Agregar manejo de excepciones
 			Boolean grabadora = (sgrabadora.toUpperCase().equals("S"))?true:false;
 			Boolean tieneUsb = sTieneUsb.toUpperCase().equals("S");
 			
